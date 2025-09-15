@@ -2,13 +2,13 @@ import cv2
 import matplotlib.pyplot as plt
 
 # Load the grayscale image
-img = cv2.imread('/home/kowsar/Documents/Image_Processing/DIP_Problems/lily.jpeg', 0)
+img = cv2.imread('/home/kowsar/Documents/Digital_Image_Processing/DIP_Problems/Images/lily.jpeg', 0)
 
 # Apply Gaussian Blur to reduce noise
 blurred_img = cv2.GaussianBlur(img, (5, 5), 1.4)
 
 # Perform Canny Edge Detection
-edges = cv2.Canny(blurred_img, threshold1=50, threshold2=150)
+edges = cv2.Canny(blurred_img, threshold1=80, threshold2=20)
 
 # Display the results
 plt.figure(figsize=(10,5))

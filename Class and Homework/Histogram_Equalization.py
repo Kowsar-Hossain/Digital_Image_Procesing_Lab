@@ -1,71 +1,145 @@
-import cv2
-import numpy as np
+'''
+Problem Statement (Histogram Equalization with Reference Image):
+Given an original grayscale image and a reference grayscale image,
+perform histogram equalization using reference image CDF.
+Plot original, reference, and enhanced images along with their
+histograms and CDFs.
+'''
+
+#================= Importing necessary libraries ======================
 import matplotlib.pyplot as plt
+import numpy as np
+import cv2
 
-# --------------------------
-# Histogram Equalization Function
-# --------------------------
-def hist_equalization(img):
-    # Flatten image into 1D array
-    hist, bins = np.histogram(img.flatten(), 256, [0,256])
-    
-    # Normalize histogram (probability distribution)
-    pdf = hist / hist.sum()
-    
-    # Compute cumulative distribution function (CDF)
-    cdf = pdf.cumsum()
-    
-    # Normalize CDF to 0–255
-    cdf_normalized = np.round(cdf * 255).astype(np.uint8)
-    
-    # Map original pixels to equalized values
-    equalized_img = cdf_normalized[img]
-    
-    return equalized_img
 
-# --------------------------
-# Load Image
-# --------------------------
-img = cv2.imread("/home/kowsar/Documents/Image_Processing/DIP_Problems/lily.jpeg", cv2.IMREAD_GRAYSCALE)
+#================= Execution workflow ==============
+def main():
+    # --- Input paths (change if needed) ---
+    img_path = "/home/kowsar/Documents/Digital_Image_Processing/DIP_Problems/Images/lily.jpeg"
+    ref_path = "/home/kowsar/Documents/Digital_Image_Processing/DIP_Problems/Images/color.jpeg"
 
-# Apply own histogram equalization
-my_equalized = hist_equalization(img)
+    # --- Read images in grayscale ---
+    img_gray = cv2.imread(img_path, 0)
+    ref_gray = cv2.imread(ref_path, 0)
 
-# For comparison (OpenCV built-in, optional to check)
-opencv_equalized = cv2.equalizeHist(img)
+    # --- Check if images are loaded ---
+    if img_gray is None:
+        raise FileNotFoundError(f"Could not load original image from {img_path}")
+    if ref_gray is None:
+        raise FileNotFoundError(f"Could not load reference image from {ref_path}")
 
-# --------------------------
-# Plot Results
-# --------------------------
-plt.figure(figsize=(12, 8))
+    # --- Histogram & CDF for original ---
+    hist_orig = histogram(img_gray)
+    pdf_orig = pdf_f(hist_orig)
+    cdf_orig = cdf_f(pdf_orig)
 
-plt.subplot(2, 3, 1)
-plt.imshow(img, cmap='gray')
-plt.title("Original Image")
-plt.axis("off")
+    # --- Histogram & CDF for reference ---
+    hist_ref = histogram(ref_gray)
+    pdf_ref = pdf_f(hist_ref)
+    cdf_ref = cdf_f(pdf_ref)
 
-plt.subplot(2, 3, 2)
-plt.imshow(my_equalized, cmap='gray')
-plt.title("My Equalized Image")
-plt.axis("off")
+    # --- Histogram Equalization using reference ---
+    cdf_min = cdf_ref[cdf_ref > 0].min()     # minimum non-zero CDF from reference
+    L = 256
+    new_level = np.round(((cdf_ref - cdf_min) / (1 - cdf_min)) * (L - 1)).astype(np.uint8)
 
-plt.subplot(2, 3, 3)
-plt.imshow(opencv_equalized, cmap='gray')
-plt.title("OpenCV Equalized Image")
-plt.axis("off")
+    enhanced_img = img_conv(img_gray, new_level)
 
-# Histograms
-plt.subplot(2, 3, 4)
-plt.hist(img.flatten(), bins=256, color='black')
-plt.title("Original Histogram")
+    # --- Histogram & CDF for enhanced ---
+    hist_enh = histogram(enhanced_img)
+    pdf_enh = pdf_f(hist_enh)
+    cdf_enh = cdf_f(pdf_enh)
 
-plt.subplot(2, 3, 5)
-plt.hist(my_equalized.flatten(), bins=256, color='black')
-plt.title("My Equalized Histogram")
+    #================= Display =================
+    display_results(img_gray, ref_gray, enhanced_img,
+                    hist_orig, cdf_orig,
+                    hist_ref, cdf_ref,
+                    hist_enh, cdf_enh)
 
-plt.subplot(2, 3, 6)
-plt.hist(opencv_equalized.flatten(), bins=256, color='black')
-plt.title("OpenCV Equalized Histogram")
 
-plt.tight_layout()
-plt.show()
+#================= Apply new intensity levels to image ================
+def img_conv(img_gray, new_level):
+    return new_level[img_gray]
+
+
+#================= Function to calculate histogram ====================
+def histogram(img_2D):
+    h, w = img_2D.shape
+    hist = np.zeros(256, dtype=int)
+
+    for i in range(h):
+        for j in range(w):
+            pixel_value = img_2D[i, j]
+            hist[pixel_value] += 1
+
+    return hist
+
+
+#================= Function to calculate PDF ==========================
+def pdf_f(hist):
+    return hist / hist.sum()
+
+
+#================= Function to calculate CDF ==========================
+def cdf_f(pdf):
+    return np.cumsum(pdf)
+
+
+#================= Display images and histograms ======================
+def display_results(img_orig, img_ref, img_enh,
+                    hist_orig, cdf_orig,
+                    hist_ref, cdf_ref,
+                    hist_enh, cdf_enh):
+
+    plt.figure(figsize=(18, 12))
+
+    # ---- Show Images ----
+    plt.subplot(3, 3, 1)
+    plt.imshow(img_orig, cmap="gray")
+    plt.title("Original Image")
+    plt.axis('off')
+
+    plt.subplot(3, 3, 2)
+    plt.imshow(img_ref, cmap="gray")
+    plt.title("Reference Image")
+    plt.axis('off')
+
+    plt.subplot(3, 3, 3)
+    plt.imshow(img_enh, cmap="gray")
+    plt.title("Enhanced Image")
+    plt.axis('off')
+
+    # ---- Show Histograms ----
+    plt.subplot(3, 3, 4)
+    plt.bar(range(256), hist_orig)
+    plt.title("Original Histogram")
+
+    plt.subplot(3, 3, 5)
+    plt.bar(range(256), hist_ref)
+    plt.title("Reference Histogram")
+
+    plt.subplot(3, 3, 6)
+    plt.bar(range(256), hist_enh)
+    plt.title("Enhanced Histogram")
+
+    # ---- Show CDFs ----
+    plt.subplot(3, 3, 7)
+    plt.plot(cdf_orig, color='b')
+    plt.title("Original CDF")
+
+    plt.subplot(3, 3, 8)
+    plt.plot(cdf_ref, color='g')
+    plt.title("Reference CDF")
+
+    plt.subplot(3, 3, 9)
+    plt.plot(cdf_enh, color='r')
+    plt.title("Enhanced CDF")
+
+    plt.tight_layout()
+    plt.savefig("result.png")  # Save output as image file
+    plt.show()
+
+
+#================= Main function to run the script ====================
+if __name__ == "__main__":
+    main()
