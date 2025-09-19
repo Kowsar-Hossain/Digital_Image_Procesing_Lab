@@ -64,7 +64,8 @@ def adjust_contrast(img, level="normal"):
 #================= Main ===============================================
 def main():
     src_path = r"/home/kowsar/Documents/Digital_Image_Processing/DIP_Problems/Images/lily.jpeg"
-    ref_path = r"/home/kowsar/Documents/Digital_Image_Processing/DIP_Problems/Images/FLOWER.jpeg"
+    ref_path = r"/home/kowsar/Documents/Digital_Image_Processing/DIP_Problems/Images/tree.jpeg"
+    ".jpeg"
     src_img = cv2.imread(src_path, 0)
     ref_img = cv2.imread(ref_path, 0)
 
