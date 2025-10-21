@@ -20,7 +20,7 @@ def dft_mag(arr):
     return np.log(np.abs(arr) + 1)
 
 def main():
-    base_dir = "/Users/akhi/Desktop/DIP/images"
+    base_dir = "//home/kowsar/Documents/Digital_Image_Processing/DIP_Problems/Images"
     images = sorted(glob.glob(os.path.join(base_dir, "*.jpeg")))
 
     for img_path in images:
